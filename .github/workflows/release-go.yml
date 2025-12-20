@@ -1,0 +1,40 @@
+name: Release Golang
+
+on:
+  schedule:
+    # Spec release happen: 2AM on Sunday UTC
+    # Schedule Protobuf release for: 3AM on Sunday UTC
+    # TODO: instead of a soft temporal link between spec and protobuf releases,
+    #   implement a hard link where a spec release triggers a protobuf release.
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+    # Allow manual triggering
+
+# avoid concurrent execution of release workflows
+concurrency:
+  group: release
+  # avoid cancelling in-progress release run
+  cancel-in-progress: false
+
+jobs:
+  check-and-generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout substrait-protobuf
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+
+      - name: Retrieve latest Substrait release
+        id: latest_substrait_release
+        run: |
+          # This fetches the latest release
+          gh release view --repo substrait-io/substrait --json tagName >> $GITHUB_OUTPUT
+
+      - name: Execute generate-go
+        run: |
+          VERSION=${{ steps.latest_substrait_release.outputs.tagName }}
+          ./generate-go.sh $VERSION
