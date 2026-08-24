@@ -6,9 +6,9 @@ Protobufs are generated based on tagged versions of the Substrait specification 
 # Languages
 
 ## Go
-The generated Go protobuf code is not include in the `main` branch. Instead, each version of the spec has a dedicated branch and tag from which it can be accessed.
+The generated Go protobuf code is not included in the `main` branch. Instead, each version of the spec has a dedicated branch and tag from which it can be accessed.
 
-Generation is managed by the `generate-go.sh` script which is invoked with a specific tag. For example
+Generation is managed by the `generate-go.sh` script, which is invoked with a specific tag. For example
 ```sh
 ./generate-go.sh v0.64.0
 ```
@@ -19,6 +19,11 @@ will:
 4. Commit the generated code, and tag the commit with `go/v0.64.0`
 
 Users can then access the code by referencing the tag.
+
+The `Release Go` workflow checks the latest Substrait release daily and skips
+versions that already have a `go/<version>` tag. A `workflow_dispatch` input
+can be used to generate a specific release when a scheduled run needs to be
+replayed.
 
 ## Java
 TODO

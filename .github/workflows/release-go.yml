@@ -1,0 +1,59 @@
+name: Release Go
+
+on:
+  schedule:
+    # The specification release workflow runs on Sunday. Poll daily so a
+    # delayed release is picked up without relying on a second repository's
+    # workflow dispatch permissions.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Substrait release tag to generate (for example, v0.102.0)"
+        required: false
+        type: string
+
+concurrency:
+  group: release-go
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.repository == 'substrait-io/substrait-protobuf'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve specification release
+        id: spec
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$REQUESTED_VERSION" ]; then
+            version="$REQUESTED_VERSION"
+          else
+            version="$(gh api repos/substrait-io/substrait/releases/latest --jq '.tag_name')"
+          fi
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+
+      - name: Install Buf
+        uses: bufbuild/buf-action@v1.5.0
+        with:
+          version: 1.50.0
+          github_token: ${{ github.token }}
+          setup_only: true
+
+      - name: Generate and publish Go protobufs
+        env:
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+        run: ./generate-go.sh "${{ steps.spec.outputs.version }}"
