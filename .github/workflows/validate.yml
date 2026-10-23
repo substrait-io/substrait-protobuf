@@ -1,0 +1,27 @@
+name: Validate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check shell syntax
+        run: sh -n generate-go.sh
+
+      - name: Lint shell script
+        run: shellcheck generate-go.sh
+
+      - name: Lint GitHub Actions workflows
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: .github/workflows/release-go.yml .github/workflows/validate.yml
