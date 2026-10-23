@@ -31,9 +31,14 @@ fi
 
 # Use git ls-remote to check if the specific tag exists
 echo "Checking if spec version $SPEC_VERSION exists in $SPEC_REPO_URL"
-if git ls-remote --exit-code --tags "$SPEC_REPO_URL" "refs/tags/$SPEC_VERSION" >/dev/null 2>&1; then
+if git ls-remote --exit-code --tags "$SPEC_REPO_URL" "refs/tags/$SPEC_VERSION" >/dev/null; then
     echo "✅ Spec version $SPEC_VERSION exists"
 else
+    spec_tag_status=$?
+    if [ "$spec_tag_status" -ne 2 ]; then
+        echo "❌ Unable to check spec release tag $SPEC_VERSION" >&2
+        exit 4
+    fi
     echo "❌ Spec version $SPEC_VERSION does NOT exist" >&2
     exit 3
 fi
